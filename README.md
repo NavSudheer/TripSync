@@ -1,56 +1,44 @@
-# Welcome to your Expo app 👋
+# 🧳 TripSync — Group Vacation Planner
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Plan a group vacation everyone actually agrees on. Each member submits their **budget**, **preferred destinations**, and **available dates** — TripSync combines them into one curated itinerary for the whole group.
 
-## Get started
+Built with Expo (React Native + expo-router + TypeScript). Runs on iOS, Android, and web.
 
-1. Install dependencies
+## Features (MVP)
 
-   ```bash
-   npm install
-   ```
+- **Sign in** with just a name (mock auth, stored on device)
+- **Create a group trip** — get a 6-character invite code to share
+- **Join as a solo traveller** — enter a friend's invite code to join their existing group
+- **Per-member preferences** — total budget (per person), destination votes, and any number of available date windows
+- **Curated itinerary generation**:
+  - Dates: the longest stretch when *everyone* is free (2–7 days)
+  - Budget: set by the *lowest* member budget so nobody is priced out
+  - Destination: scored by group votes, budget fit, and season match
+  - Trips are automatically shortened to stay within budget
+  - Day-by-day plan with morning / afternoon / evening activities and per-person costs
+- **Alternatives** — tap any other candidate destination to rebuild the itinerary around it
+- **"Why this trip"** notes explaining every decision the planner made
 
-2. Start the app
-
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+## Run it
 
 ```bash
-npm run reset-project
+npm install
+npm run web       # in the browser
+npm start         # scan the QR code with Expo Go for iOS/Android
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+## How it works
 
-### Other setup steps
+| Piece | File |
+|---|---|
+| Domain types | `src/types.ts` |
+| Destination catalog (10 destinations, ~10 activities each) | `src/data/destinations.ts` |
+| Itinerary engine (date overlap, budget, scoring) | `src/lib/itinerary.ts` |
+| Local "backend" (AsyncStorage store + React context) | `src/lib/store.tsx` |
+| Screens | `src/app/` (expo-router) |
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+## Current limitations
 
-## Learn more
-
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+- Data is stored **on-device only** (AsyncStorage acts as a mock backend), so groups can only be joined from the same device. Swapping `src/lib/store.tsx` for a real backend (e.g. Supabase/Firebase) makes it multi-device without touching the screens.
+- Destination catalog is static; a places/flights API could replace it later.
+- Dates are entered as `YYYY-MM-DD` text (no calendar picker yet).
