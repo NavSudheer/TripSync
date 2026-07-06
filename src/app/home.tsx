@@ -1,4 +1,5 @@
 import { Redirect, useRouter } from 'expo-router';
+import { useEffect } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
 import { Body, Button, Card, Gap, Row, Screen, SectionTitle, Subtitle, Title, usePalette } from '@/components/ui';
@@ -6,9 +7,13 @@ import { Spacing } from '@/constants/theme';
 import { useStore } from '@/lib/store';
 
 export default function Home() {
-  const { loading, user, myGroups, signOut } = useStore();
+  const { loading, user, myGroups, signOut, refresh } = useStore();
   const router = useRouter();
   const palette = usePalette();
+
+  useEffect(() => {
+    void refresh();
+  }, [refresh]);
 
   if (!loading && !user) return <Redirect href="/" />;
   if (!user) return null;

@@ -1,7 +1,8 @@
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
+import { Text } from 'react-native';
 
-import { Body, Button, Field, Gap, Screen, Subtitle, Title } from '@/components/ui';
+import { Body, Button, Danger, Field, Gap, Screen, Subtitle, Title } from '@/components/ui';
 import { useStore } from '@/lib/store';
 
 export default function CreateGroup() {
@@ -9,12 +10,19 @@ export default function CreateGroup() {
   const router = useRouter();
   const [name, setName] = useState('');
   const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const submit = async () => {
     if (!name.trim()) return;
     setBusy(true);
-    const group = await createGroup(name);
-    router.replace(`/group/${group.id}`);
+    setError(null);
+    const result = await createGroup(name);
+    if (result.ok) {
+      router.replace(`/group/${result.group.id}`);
+    } else {
+      setBusy(false);
+      setError(result.error);
+    }
   };
 
   return (
@@ -31,6 +39,12 @@ export default function CreateGroup() {
         returnKeyType="done"
         onSubmitEditing={submit}
       />
+      {error ? (
+        <>
+          <Text style={{ color: Danger, fontWeight: '600' }}>{error}</Text>
+          <Gap size={8} />
+        </>
+      ) : null}
       <Button label="Create group" onPress={submit} disabled={!name.trim()} loading={busy} />
       <Button label="Back" variant="secondary" onPress={() => router.back()} />
       <Gap />

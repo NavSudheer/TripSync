@@ -77,12 +77,17 @@ export default function Preferences() {
       return;
     }
     setBusy(true);
-    await savePreferences(group.id, {
+    const result = await savePreferences(group.id, {
       budget: Math.round(budgetNum),
       destinationIds,
       dateRanges: ranges,
     });
-    router.back();
+    if (result.ok) {
+      router.back();
+    } else {
+      setBusy(false);
+      setError(result.error);
+    }
   };
 
   return (

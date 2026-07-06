@@ -1,6 +1,6 @@
 import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
-import { useState } from 'react';
-import { Alert, Platform, Share, Text, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { ActivityIndicator, Alert, Platform, Share, Text, View } from 'react-native';
 
 import {
   Accent,
@@ -17,24 +17,43 @@ import {
   usePalette,
 } from '@/components/ui';
 import { Spacing } from '@/constants/theme';
-import { generateItinerary, membersWithPrefs } from '@/lib/itinerary';
+import { membersWithPrefs } from '@/lib/itinerary';
 import { useStore } from '@/lib/store';
 
 export default function GroupDashboard() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { loading, user, getGroup, updateGroup, leaveGroup } = useStore();
+  const { loading, user, getGroup, refreshGroup, generatePlan, leaveGroup } = useStore();
   const router = useRouter();
   const palette = usePalette();
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
+  // Pull the latest group state (other members' prefs) from the server.
+  useEffect(() => {
+    if (id) void refreshGroup(id);
+  }, [id, refreshGroup]);
+
   if (!loading && !user) return <Redirect href="/" />;
   const group = getGroup(id);
-  if (loading) return <Screen scroll={false}>{null}</Screen>;
-  if (!group || !user) return <Redirect href="/home" />;
+
+  if (loading || !group) {
+    return (
+      <Screen scroll={false}>
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          <ActivityIndicator size="large" color={Accent} />
+          <Gap />
+          <Text
+            onPress={() => router.replace('/home')}
+            style={{ color: palette.textSecondary, fontWeight: '600' }}>
+            ‹ Back to home
+          </Text>
+        </View>
+      </Screen>
+    );
+  }
+  if (!user) return <Redirect href="/" />;
 
   const ready = membersWithPrefs(group);
-  const me = group.members.find((m) => m.userId === user.id);
   const iAmReady = ready.some((m) => m.userId === user.id);
 
   const shareCode = async () => {
@@ -49,13 +68,11 @@ export default function GroupDashboard() {
   const generate = async () => {
     setBusy(true);
     setError(null);
-    const result = generateItinerary(group);
+    const result = await generatePlan(group.id);
+    setBusy(false);
     if (result.ok) {
-      await updateGroup(group.id, (g) => ({ ...g, itinerary: result.itinerary }));
-      setBusy(false);
       router.push(`/group/${group.id}/itinerary`);
     } else {
-      setBusy(false);
       setError(result.error);
     }
   };

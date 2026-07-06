@@ -4,6 +4,7 @@
   "version": "1.0.0",
   "dependencies": {
     "@expo/ui": "~57.0.3",
+    "@neondatabase/serverless": "^1.1.0",
     "@react-native-async-storage/async-storage": "2.2.0",
     "expo": "~57.0.2",
     "expo-constants": "~57.0.3",
@@ -30,6 +31,7 @@
   },
   "devDependencies": {
     "@types/react": "~19.2.2",
+    "@vercel/node": "^5.8.22",
     "typescript": "~6.0.3"
   },
   "scripts": {

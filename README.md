@@ -2,7 +2,9 @@
 
 Plan a group vacation everyone actually agrees on. Each member submits their **budget**, **preferred destinations**, and **available dates** — TripSync combines them into one curated itinerary for the whole group.
 
-Built with Expo (React Native + expo-router + TypeScript). Runs on iOS, Android, and web.
+**Live app:** https://tripsync-beige.vercel.app
+
+Built with Expo (React Native + expo-router + TypeScript). Runs on iOS, Android, and web. Backend: Vercel serverless functions + Neon Postgres.
 
 ## Features (MVP)
 
@@ -23,9 +25,19 @@ Built with Expo (React Native + expo-router + TypeScript). Runs on iOS, Android,
 
 ```bash
 npm install
-npm run web       # in the browser
+npm run web       # in the browser (requires Node >= 20.19.4)
 npm start         # scan the QR code with Expo Go for iOS/Android
 ```
+
+Local dev talks to the production API by default; set `EXPO_PUBLIC_API_URL` to override.
+
+## Deploy
+
+```bash
+vercel --prod
+```
+
+The Vercel project builds the web app with `npx expo export -p web` (see `vercel.json`) and deploys `/api/*.ts` as serverless functions. The Neon Postgres integration injects `DATABASE_URL`; the schema (a single `groups` table with a JSONB document per group) is created automatically on first request.
 
 ## How it works
 
@@ -34,11 +46,15 @@ npm start         # scan the QR code with Expo Go for iOS/Android
 | Domain types | `src/types.ts` |
 | Destination catalog (10 destinations, ~10 activities each) | `src/data/destinations.ts` |
 | Itinerary engine (date overlap, budget, scoring) | `src/lib/itinerary.ts` |
-| Local "backend" (AsyncStorage store + React context) | `src/lib/store.tsx` |
+| API client store (React context) | `src/lib/store.tsx` |
+| Serverless API (Neon Postgres) | `api/` |
 | Screens | `src/app/` (expo-router) |
+
+The itinerary engine runs **server-side** (`api/generate.ts`) so the whole group sees the same plan; it's a pure function shared with the client codebase.
 
 ## Current limitations
 
-- Data is stored **on-device only** (AsyncStorage acts as a mock backend), so groups can only be joined from the same device. Swapping `src/lib/store.tsx` for a real backend (e.g. Supabase/Firebase) makes it multi-device without touching the screens.
+- Identity is a locally-stored anonymous user (no auth); clearing browser storage creates a new identity.
+- Concurrent edits use last-write-wins at the group level.
 - Destination catalog is static; a places/flights API could replace it later.
 - Dates are entered as `YYYY-MM-DD` text (no calendar picker yet).

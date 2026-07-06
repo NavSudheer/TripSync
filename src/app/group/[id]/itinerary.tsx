@@ -1,6 +1,6 @@
 import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Text, View } from 'react-native';
+import { ActivityIndicator, Text, View } from 'react-native';
 
 import {
   Accent,
@@ -18,35 +18,41 @@ import {
 } from '@/components/ui';
 import { Spacing } from '@/constants/theme';
 import { prettyDate, prettyRange } from '@/lib/dates';
-import { generateItinerary } from '@/lib/itinerary';
 import { useStore } from '@/lib/store';
 
 const SLOT_ICONS = { morning: '🌅', afternoon: '☀️', evening: '🌙' } as const;
 
 export default function ItineraryScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { loading, user, getGroup, updateGroup } = useStore();
+  const { loading, user, getGroup, generatePlan } = useStore();
   const router = useRouter();
   const palette = usePalette();
   const [error, setError] = useState<string | null>(null);
+  const [switching, setSwitching] = useState(false);
 
   if (!loading && !user) return <Redirect href="/" />;
   const group = getGroup(id);
-  if (loading) return <Screen scroll={false}>{null}</Screen>;
-  if (!group || !user) return <Redirect href="/home" />;
+  if (loading || !group) {
+    return (
+      <Screen scroll={false}>
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          <ActivityIndicator size="large" color={Accent} />
+        </View>
+      </Screen>
+    );
+  }
+  if (!user) return <Redirect href="/" />;
 
   const itinerary = group.itinerary;
   if (!itinerary) return <Redirect href={`/group/${group.id}`} />;
 
   const switchDestination = async (destinationId: string) => {
-    if (destinationId === itinerary.destinationId) return;
+    if (destinationId === itinerary.destinationId || switching) return;
     setError(null);
-    const result = generateItinerary(group, destinationId);
-    if (result.ok) {
-      await updateGroup(group.id, (g) => ({ ...g, itinerary: result.itinerary }));
-    } else {
-      setError(result.error);
-    }
+    setSwitching(true);
+    const result = await generatePlan(group.id, destinationId);
+    setSwitching(false);
+    if (!result.ok) setError(result.error);
   };
 
   const overBudget = itinerary.estCostPerPerson > itinerary.groupBudgetPerPerson;

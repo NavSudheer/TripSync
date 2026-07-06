@@ -1,5 +1,5 @@
-import { DESTINATIONS, getDestination } from '@/data/destinations';
-import { addDays, formatDate, parseDate } from '@/lib/dates';
+import { DESTINATIONS, getDestination } from '../data/destinations';
+import { addDays, formatDate, parseDate } from './dates';
 import type {
   Activity,
   DateRange,
@@ -11,7 +11,7 @@ import type {
   ItineraryItem,
   Member,
   MemberPreferences,
-} from '@/types';
+} from '../types';
 
 export const MIN_TRIP_DAYS = 2;
 export const MAX_TRIP_DAYS = 7;
