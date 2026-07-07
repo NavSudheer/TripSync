@@ -34,7 +34,45 @@ export function isValidRange(start: string, end: string): boolean {
 }
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const MONTHS_LONG = [
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December',
+];
 const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+/** Today as a YYYY-MM-DD string, using the device's local calendar date. */
+export function todayISO(): string {
+  const d = new Date();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${d.getFullYear()}-${m}-${day}`;
+}
+
+/** "June 2026" for a 0-indexed month. */
+export function monthLabel(year: number, month: number): string {
+  return `${MONTHS_LONG[month]} ${year}`;
+}
+
+export type CalendarCell = { iso: string; day: number; inMonth: boolean };
+
+/**
+ * A 6-week grid (rows of 7, Sunday-first) covering the given 0-indexed month,
+ * padded with trailing/leading days from adjacent months.
+ */
+export function monthMatrix(year: number, month: number): CalendarCell[][] {
+  const first = new Date(Date.UTC(year, month, 1));
+  const gridStart = addDays(first, -first.getUTCDay());
+  const weeks: CalendarCell[][] = [];
+  for (let w = 0; w < 6; w += 1) {
+    const row: CalendarCell[] = [];
+    for (let d = 0; d < 7; d += 1) {
+      const date = addDays(gridStart, w * 7 + d);
+      row.push({ iso: formatDate(date), day: date.getUTCDate(), inMonth: date.getUTCMonth() === month });
+    }
+    weeks.push(row);
+  }
+  return weeks;
+}
 
 /** "2026-08-14" -> "Fri, Aug 14" */
 export function prettyDate(s: string): string {

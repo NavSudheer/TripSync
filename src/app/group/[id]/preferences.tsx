@@ -1,7 +1,8 @@
 import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Pressable, Text } from 'react-native';
 
+import { RangeCalendar } from '@/components/range-calendar';
 import {
   Body,
   Button,
@@ -19,7 +20,7 @@ import {
 } from '@/components/ui';
 import { Spacing } from '@/constants/theme';
 import { DESTINATIONS } from '@/data/destinations';
-import { isValidRange, prettyRange } from '@/lib/dates';
+import { prettyRange } from '@/lib/dates';
 import { useStore } from '@/lib/store';
 import type { DateRange } from '@/types';
 
@@ -35,8 +36,6 @@ export default function Preferences() {
   const [budget, setBudget] = useState(existing ? String(existing.budget) : '');
   const [destinationIds, setDestinationIds] = useState<string[]>(existing?.destinationIds ?? []);
   const [ranges, setRanges] = useState<DateRange[]>(existing?.dateRanges ?? []);
-  const [rangeStart, setRangeStart] = useState('');
-  const [rangeEnd, setRangeEnd] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -50,15 +49,12 @@ export default function Preferences() {
     );
   };
 
-  const addRange = () => {
+  const addRange = (range: DateRange) => {
     setError(null);
-    if (!isValidRange(rangeStart, rangeEnd)) {
-      setError('Enter valid dates as YYYY-MM-DD, with the start on or before the end.');
-      return;
-    }
-    setRanges((prev) => [...prev, { start: rangeStart.trim(), end: rangeEnd.trim() }]);
-    setRangeStart('');
-    setRangeEnd('');
+    // Skip exact duplicates so tapping twice doesn't stack the same window.
+    setRanges((prev) =>
+      prev.some((r) => r.start === range.start && r.end === range.end) ? prev : [...prev, range]
+    );
   };
 
   const removeRange = (index: number) => {
@@ -126,7 +122,7 @@ export default function Preferences() {
       <Gap />
 
       <SectionTitle>📅 Available dates</SectionTitle>
-      <Body secondary>Add every window when you could travel. More windows = better overlap.</Body>
+      <Body secondary>Tap a start and end day to add a window. More windows = better overlap.</Body>
       <Gap size={Spacing.two} />
       {ranges.map((r, i) => (
         <Card key={`${r.start}-${r.end}-${i}`}>
@@ -138,29 +134,7 @@ export default function Preferences() {
           </Row>
         </Card>
       ))}
-      <Row style={{ alignItems: 'flex-start' }}>
-        <View style={{ flex: 1, marginRight: Spacing.two }}>
-          <Field
-            label="From"
-            placeholder="2026-08-10"
-            value={rangeStart}
-            onChangeText={setRangeStart}
-            autoCapitalize="none"
-            autoCorrect={false}
-          />
-        </View>
-        <View style={{ flex: 1 }}>
-          <Field
-            label="To"
-            placeholder="2026-08-20"
-            value={rangeEnd}
-            onChangeText={setRangeEnd}
-            autoCapitalize="none"
-            autoCorrect={false}
-          />
-        </View>
-      </Row>
-      <Button label="＋ Add date window" variant="secondary" onPress={addRange} />
+      <RangeCalendar onConfirm={addRange} />
       <Gap />
 
       {error ? (
